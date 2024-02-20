@@ -17,6 +17,7 @@ let readinessRoutePath
 
 /*
     apiSpec - name/path (required)
+    requestSizeLimit - (required)
 */
 const validationServiceInitialise = async (options) => {
     port = await startServer(options)
@@ -99,7 +100,7 @@ const startServer = async (options) => {
         exitProcessWhenServiceIsStopped = initialisationOptions.exitProcessWhenServiceIsStopped
 
     try {
-        await exposeHttpServer()
+        await exposeHttpServer(options)
         return port
     } catch (err) {
         console.log(err)
@@ -114,7 +115,7 @@ const getPath = path => {
     return path
 }
 
-const exposeHttpServer = async () => {
+const exposeHttpServer = async (options) => {
     const apiSpec = addReadinessRouteToApiSpec()
 
     const validationMiddleware = await OpenApiValidator.middleware({
@@ -124,9 +125,9 @@ const exposeHttpServer = async () => {
     })
 
     app = express()
-    app.use(bodyParser.json())
-    app.use(bodyParser.text());
-    app.use(bodyParser.urlencoded({ extended: false }));
+    app.use(bodyParser.json({limit: options.requestSizeLimit}))
+    app.use(bodyParser.text({limit: options.requestSizeLimit}));
+    app.use(bodyParser.urlencoded({limit: options.requestSizeLimit, extended: false }));
 
     app.use((req, res, next) => {
         if (req.path !== '/validate-response' && req.path !== readinessPath)
