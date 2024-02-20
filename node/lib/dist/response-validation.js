@@ -214,6 +214,7 @@ const exposeHttpServer = async (options) => {
     console.log(`openapi-json-response-validator-external listening at http://localhost:${port}`)
     console.log(`/readiness endpoint exposed at http://localhost:${port}/readiness which will return a 200 status code if validation is available`)
     console.log(`/validate-response endpoint exposed at http://localhost:${port}/validate-response`)
+    console.log(`Request body size limit is ${options.requestSizeLimit}`)
     
     process.on('SIGTERM', stopServers);
     process.on('SIGINT', stopServers);
