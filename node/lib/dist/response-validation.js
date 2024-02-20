@@ -21,9 +21,13 @@ let exitProcessWhenServiceIsStopped = true
     apiSpec - name/path (required)
     port - (optional) default random port or OPENAPI_JSON_RESPONSE_VALIDATOR_PORT environment variable if defined
                  returns port the server is exposed on
+    requestSizeLimit - (optional) default is `50mb` (see: https://stackoverflow.com/a/19965089)
 */
 const initialise = async (options) => {
     const initialisationOptions = options || {}
+    if (!initialisationOptions.requestSizeLimit) {
+        initialisationOptions.requestSizeLimit = "50mb"
+    }
     
     try {
         validationPort = await validationServiceInitialise(initialisationOptions)    
@@ -67,7 +71,7 @@ const startServer = async (options) => {
         exitProcessWhenServiceIsStopped = initialisationOptions.exitProcessWhenServiceIsStopped
 
     try {
-        await exposeHttpServer()
+        await exposeHttpServer(options)
         return port
     } catch (err) {
         console.log(err)
@@ -133,11 +137,11 @@ const assertThatResponseIsValid = async (method, path, statusCode, headers, json
     throw new Error(errorMessage)
 }
 
-const exposeHttpServer = async () => {
+const exposeHttpServer = async (options) => {
 
-    app.use(bodyParser.json())
-    app.use(bodyParser.text());
-    app.use(bodyParser.urlencoded({ extended: false }));
+    app.use(bodyParser.json({limit: options.requestSizeLimit}))
+    app.use(bodyParser.text({limit: options.requestSizeLimit}));
+    app.use(bodyParser.urlencoded({limit: options.requestSizeLimit, extended: false }));
     
     app.get('/readiness', (req, res) => {
         res.status(200).end()
